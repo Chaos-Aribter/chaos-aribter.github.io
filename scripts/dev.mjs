@@ -1,4 +1,3 @@
-import { rm } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
 const args = process.argv.slice(2);
@@ -6,7 +5,7 @@ const portFlag = args.findIndex((arg) => arg === "--port" || arg === "-p");
 const requestedPort = portFlag >= 0 ? Number(args[portFlag + 1]) : undefined;
 
 if (portFlag >= 0 && (!Number.isInteger(requestedPort) || requestedPort < 1 || requestedPort > 65535)) {
-  console.error("\nPlease provide a valid port, for example: npm run dev -- --port 3001\n");
+  console.error("\nPlease provide a valid port, for example: npm run dev -- --port 9000\n");
   process.exit(1);
 }
 
@@ -23,7 +22,7 @@ const canListen = async (port) => {
   });
 };
 
-let port = requestedPort ?? 3000;
+let port = requestedPort ?? 8999;
 if (!requestedPort) {
   while (!(await canListen(port))) port += 1;
 } else if (!(await canListen(port))) {
@@ -31,15 +30,10 @@ if (!requestedPort) {
   process.exit(1);
 }
 
-// Each dev server receives its own cache. This prevents a second server from
-// deleting or serving stale chunks from the first server's .next directory.
-const distDir = `.next-dev-${port}`;
-await rm(new URL(`../${distDir}`, import.meta.url), { recursive: true, force: true });
-
 console.log(`\nStarting the development server at http://localhost:${port}\n`);
 const nextBinary = new URL("../node_modules/next/dist/bin/next", import.meta.url);
 const child = spawn(process.execPath, [nextBinary.pathname, "dev", "--port", String(port)], {
-  env: { ...process.env, NEXT_DIST_DIR: distDir },
+  env: process.env,
   stdio: "inherit",
 });
 
