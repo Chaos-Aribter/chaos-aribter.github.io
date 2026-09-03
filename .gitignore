@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# Next.js build output and per-port development caches
+.next/
+.next-dev-*/
+out/
+
+# local configuration and OS files
+.env*
+!.env.example
+.DS_Store
+
+# TypeScript incremental compilation cache
+*.tsbuildinfo
