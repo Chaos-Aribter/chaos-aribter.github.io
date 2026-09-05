@@ -88,7 +88,7 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`/data/remote-stats.json?at=${Date.now()}`, { cache: "no-store", signal: controller.signal })
+    fetch(`data/remote-stats.json?at=${Date.now()}`, { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
       .then((data: unknown) => {
         if (!data || typeof data !== "object") return;
