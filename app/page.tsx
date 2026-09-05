@@ -8,6 +8,21 @@ import { type MouseEvent, useEffect, useRef, useState } from "react";
 const SpaceScene = dynamic(() => import("./space-scene"), { ssr: false });
 gsap.registerPlugin(ScrollTrigger);
 
+type RemoteStats = { members: number; isk: number; kills: number; fetchedAt: string | null };
+const fallbackStats: RemoteStats = { members: 8525, isk: 48.27e12, kills: 192733, fetchedAt: null };
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
+function formatIsk(value: number) {
+  const units: Array<[number, string]> = [[1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]];
+  for (const [scale, suffix] of units) {
+    if (Math.abs(value) >= scale) return `${(value / scale).toFixed(2).replace(/\\.?0+$/, "")}${suffix}`;
+  }
+  return formatNumber(Math.round(value));
+}
+
 const copy = {
   zh: {
     lang: "EN", switchLabel: "Switch to English", skip: "跳至内容", loader: "正在连接新伊甸", status: "状态",
@@ -18,7 +33,7 @@ const copy = {
     compareEyebrow: "SOLO PLAYER // CORPORATION", compareTitle: <>一个人的 EVE，<em>走不远。</em></>, compareLead: "EVE 是硬核的 MMO：大量内容不加军团根本玩不到，而重复的日常，只有和靠谱的伙伴一起才有意义。", solo: ["独狼", "SOLO", ["大量游戏内容需要组队，单人无法体验", "无论想玩什么，全流程都需要自己弄：采购 · 运输 · 出货", "缺少社交，内容很快就重复乏味"]], corporation: ["加入军团", "IN CORP", ["解锁所有组队、社区内容：高价值任务区、团队副本 / PVP", "分工合作，专人出货回收 · 快递 · 后勤", "找到志同道合的伙伴，长期玩下去"]],
     whyEyebrow: "[ 为什么是 CACX ]", whyTitle: <>新人，为什么选<br /><em>混沌仲裁者。</em></>, whyLead: "最大的华人军团，专为新人与长期玩家打造。", whyPoints: [["01", "零门槛新人社区", "专门面向新人的社区与组织，纯新也可立即开始生产与战斗。"], ["02", "完整发育路线", "经过检验的新人成长路径，无论后期想玩什么，前期都能让你打好基础。"], ["03", "最大华人军团", "最大的华人军团，最多样的活动，最正常友善的社区文化。"]],
     partnersEyebrow: "[ 关注我们 ]", partnersTitle: <>关注<br /><em>我们。</em></>, partnerLead: "公众号与 Bilibili。", partners: [["WX", "官方渠道", "公众号", "关注军团动态与活动信息"], ["B", "视频平台", "Bilibili", "观看军团内容与作战记录"]],
-    channel: "[ 加入混沌 ]", join: <>加入<br /><em>混沌。</em></>, joinText: "扫码加入军团招募群，与我们建立联系。", cta: "扫码加入招募群", qrTitle: <>扫码加入<br /><em>军团群。</em></>, qrLead: "使用 QQ 扫描二维码，加入混沌仲裁者军团群。", close: "关闭", footer: "新伊甸 // 版权所有"
+    channel: "[ 加入混沌 ]", join: <>加入<br /><em>混沌。</em></>, joinText: "扫码加入军团招募群，与我们建立联系。", cta: "扫码加入招募群", qrTitle: <>扫码加入<br /><em>军团群。</em></>, qrLead: "使用 QQ 扫描二维码，加入混沌仲裁者军团群。", wechatChannel: "[ 官方公众号 ]", wechatTitle: <>扫码关注<br /><em>公众号。</em></>, wechatLead: "公众号二维码将在此展示。", assetPending: "二维码待接入", close: "关闭", footer: "新伊甸 // 版权所有"
   },
   en: {
     lang: "中", switchLabel: "切换至中文", skip: "Skip to content", loader: "CONNECTING TO NEW EDEN", status: "STATUS",
@@ -29,7 +44,7 @@ const copy = {
     compareEyebrow: "SOLO PLAYER // CORPORATION", compareTitle: <>EVE ALONE<br />DOESN&apos;T <em>GO FAR.</em></>, compareLead: "EVE is a demanding MMO: much of its best content begins with a corporation, and daily repetition only matters when shared with dependable pilots.", solo: ["LONE WOLF", "SOLO", ["Much of the game requires a group; solo pilots cannot access it", "Every step is yours alone: procurement · hauling · sales", "Without a social circle, the routine soon runs out of meaning"]], corporation: ["JOIN THE CORP", "IN CORP", ["Unlock group and community content: valuable sites, team PvE, and PVP", "Specialists handle recovery · logistics · courier work", "Find pilots with the same intent—and keep flying together"]],
     whyEyebrow: "[ WHY CACX ]", whyTitle: <>NEW PILOTS, WHY<br /><em>CHAOS ARBITER?</em></>, whyLead: "A major Chinese-speaking corporation built for new and long-term pilots.", whyPoints: [["01", "A WELCOMING START", "A community designed for new pilots. Start building and fighting from day one."], ["02", "A PROVEN GROWTH PATH", "A tested route that builds strong foundations for whatever you choose later."], ["03", "A THRIVING CHINESE COMMUNITY", "More ways to fly, more pilots to meet, and a friendly culture built to last."]],
     partnersEyebrow: "[ FOLLOW US ]", partnersTitle: <>FOLLOW<br /><em>US.</em></>, partnerLead: "WeChat Official Account and Bilibili.", partners: [["WX", "OFFICIAL CHANNEL", "WECHAT", "Corporation updates and event information"], ["B", "VIDEO PLATFORM", "BILIBILI", "Corporation stories and battle records"]],
-    channel: "[ JOIN CHAOS ]", join: <>JOIN<br /><em>CHAOS.</em></>, joinText: "Scan the group code to connect with Chaos Arbiter recruitment.", cta: "SCAN TO JOIN", qrTitle: <>SCAN TO JOIN<br /><em>THE CORP.</em></>, qrLead: "Scan the QR code with QQ to join the Chaos Arbiter corporation group.", close: "CLOSE", footer: "NEW EDEN // ALL RIGHTS RESERVED"
+    channel: "[ JOIN CHAOS ]", join: <>JOIN<br /><em>CHAOS.</em></>, joinText: "Scan the group code to connect with Chaos Arbiter recruitment.", cta: "SCAN TO JOIN", qrTitle: <>SCAN TO JOIN<br /><em>THE CORP.</em></>, qrLead: "Scan the QR code with QQ to join the Chaos Arbiter corporation group.", wechatChannel: "[ WECHAT OFFICIAL ACCOUNT ]", wechatTitle: <>FOLLOW ON<br /><em>WECHAT.</em></>, wechatLead: "The WeChat QR code will appear here.", assetPending: "QR ASSET PENDING", close: "CLOSE", footer: "NEW EDEN // ALL RIGHTS RESERVED"
   }
 } as const;
 
@@ -40,10 +55,12 @@ export default function Home() {
   const [assetReady, setAssetReady] = useState(false);
   const [displayProgress, setDisplayProgress] = useState(.025);
   const [loaderComplete, setLoaderComplete] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<"join" | "wechat" | null>(null);
+  const [remoteStats, setRemoteStats] = useState<RemoteStats>(fallbackStats);
   const displayProgressRef = useRef(.025);
   const [locale, setLocale] = useState<keyof typeof copy>("zh");
   const t = copy[locale];
+  const modal = activeModal === "join" ? { eyebrow: t.channel, title: t.qrTitle, lead: t.qrLead, image: "https://cdn.cacx.online/images/join-group-qr.png", fallback: "/images/join-group-qr.png", alt: "混沌仲裁者军团群二维码" } : activeModal === "wechat" ? { eyebrow: t.wechatChannel, title: t.wechatTitle, lead: t.wechatLead, image: "https://cdn.cacx.online/images/wechat-qr.png", fallback: "/images/wechat-qr.png", alt: "混沌仲裁者官方公众号二维码" } : null;
 
   const navigateTo = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
     event.preventDefault();
@@ -67,6 +84,21 @@ export default function Home() {
       gsap.utils.toArray<HTMLElement>(".reveal").forEach(node => gsap.fromTo(node, { y: 45, opacity: 0 }, { y: 0, opacity: 1, duration: .85, scrollTrigger: { trigger: node, start: "top 85%", once: true } }));
     }, root);
     return () => context.revert();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`/data/remote-stats.json?at=${Date.now()}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error(`HTTP ${response.status}`)))
+      .then((data: unknown) => {
+        if (!data || typeof data !== "object") return;
+        const stats = data as RemoteStats;
+        if ([stats.members, stats.isk, stats.kills].every((value) => typeof value === "number" && Number.isFinite(value))) {
+          setRemoteStats(stats);
+        }
+      })
+      .catch(() => { /* Keep the embedded fallback when the cache is temporarily unavailable. */ });
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -99,8 +131,8 @@ export default function Home() {
   }, [loaderComplete]);
 
   useEffect(() => {
-    if (!joinOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setJoinOpen(false); };
+    if (!activeModal) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setActiveModal(null); };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
@@ -108,19 +140,26 @@ export default function Home() {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [joinOpen]);
+  }, [activeModal]);
+
+  const displayedMetrics = [
+    [formatNumber(remoteStats.members), t.metrics[0][1]],
+    [formatIsk(remoteStats.isk), t.metrics[1][1]],
+    [formatNumber(remoteStats.kills), t.metrics[2][1]],
+    [t.metrics[3][0], t.metrics[3][1]],
+  ];
 
   return <main ref={root} className="journey" lang={locale === "zh" ? "zh-CN" : "en"}>
     <a className="skip" href="#doctrine">{t.skip}</a><div className="loader" aria-hidden="true"><p>{t.loader} // {Math.round(displayProgress * 100)}%</p><span><i className="loader-line" style={{ transform: `scaleX(${displayProgress})` }} /></span></div><div className="scene" aria-hidden="true"><SpaceScene progress={progress} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
     <nav><a className="brand" href="#top" onClick={(event) => navigateTo(event, "#top")}><strong>混沌仲裁者</strong><span>CHAOS ARBITER//</span></a><div><a href="#doctrine" onClick={(event) => navigateTo(event, "#doctrine")}>{t.nav[0]}</a><a href="#intel" onClick={(event) => navigateTo(event, "#intel")}>{t.nav[1]}</a><a href="#join" onClick={(event) => navigateTo(event, "#join")}>{t.nav[2]}</a></div><div className="nav-tools"><button className="locale" onClick={() => setLocale(locale === "zh" ? "en" : "zh")} aria-label={t.switchLabel}>{t.lang}</button></div></nav>
     <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className="hero-reveal">{t.hero[0]} <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></section>
-    <section id="intel" className="section intel"><div className="reveal"><p className="eyebrow">{t.intel}</p><h2>{t.intelTitle}</h2><div className="metrics">{t.metrics.map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div></div><div className="radar reveal" /></section>
+    <section id="intel" className="section intel"><div className="reveal"><p className="eyebrow">{t.intel}</p><h2>{t.intelTitle}</h2><div className="metrics">{displayedMetrics.map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div></div><div className="radar reveal" /></section>
     <section className="resources section"><header className="reveal"><p className="eyebrow">{t.resourcesEyebrow}</p><h2>{t.resourcesTitle}</h2><p>{t.resourcesLead}</p></header><div className="resource-list reveal">{t.resources.map(([number, title, body]) => <article key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p></article>)}</div></section>
     <section id="doctrine" className="section"><header className="reveal"><p className="eyebrow">{t.doctrine}</p><h2>{t.doctrineTitle}</h2><p>{t.doctrineLead}</p></header><div className="op-list reveal">{t.ops.map(([number, title, body]) => <article className="op" key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p><i>↗</i></article>)}</div></section>
     <section className="comparison section"><header className="reveal"><p className="eyebrow">{t.compareEyebrow}</p><h2>{t.compareTitle}</h2><p>{t.compareLead}</p></header><div className="flight-choice reveal"><article className="choice solo"><div><small>01 //</small><h3>{t.solo[0]} <em>{t.solo[1]}</em></h3></div><ul>{t.solo[2].map((item) => <li key={item}>{item}</li>)}</ul></article><article className="choice corp"><div><small>02 //</small><h3>{t.corporation[0]} <em>{t.corporation[1]}</em></h3></div><ul>{t.corporation[2].map((item) => <li key={item}>{item}</li>)}</ul></article></div></section>
     <section className="why-cacx section"><header className="reveal"><p className="eyebrow">{t.whyEyebrow}</p><h2>{t.whyTitle}</h2><p>{t.whyLead}</p></header><div className="why-list reveal">{t.whyPoints.map(([number, title, body]) => <article key={number}><small>{number} //</small><h3>{title}</h3><p>{body}</p></article>)}</div></section>
-    <section className="partners section"><header className="reveal"><p className="eyebrow">{t.partnersEyebrow}</p><h2>{t.partnersTitle}</h2><p>{t.partnerLead}</p></header><div className="partner-grid reveal">{t.partners.map(([mark, type, name, detail]) => <article className="partner" key={name}><div className="partner-logo" aria-label={`${name} logo placeholder`}><span>{mark}</span><i /></div><small>{type}</small><h3>{name}</h3><p>{detail}</p></article>)}</div></section>
-    <section id="join" className="join"><p className="eyebrow">{t.channel}</p><h2 className="reveal">{t.join}</h2><div className="join-row reveal"><p>{t.joinText}</p><button className="cta" type="button" onClick={() => setJoinOpen(true)} aria-haspopup="dialog">{t.cta} <b>→</b></button></div></section><footer>© 2026 CHAOS ARBITER <span>{t.footer}</span></footer>
-    {joinOpen && <div className="qr-modal" role="presentation" onMouseDown={() => setJoinOpen(false)}><section className="qr-terminal" role="dialog" aria-modal="true" aria-labelledby="join-qr-title" onMouseDown={(event) => event.stopPropagation()}><button className="qr-close" type="button" onClick={() => setJoinOpen(false)} aria-label={t.close}>×</button><p className="eyebrow">{t.channel}</p><h2 id="join-qr-title">{t.qrTitle}</h2><img className="join-qr" src="/images/join-group-qr.png" alt="混沌仲裁者招募群二维码" /><p>{t.qrLead}</p></section></div>}
+    <section className="partners section"><header className="reveal"><p className="eyebrow">{t.partnersEyebrow}</p><h2>{t.partnersTitle}</h2><p>{t.partnerLead}</p></header><div className="partner-grid reveal">{t.partners.map(([mark, type, name, detail], index) => index === 0 ? <button className="partner" type="button" key={name} onClick={() => setActiveModal("wechat")} aria-haspopup="dialog"><div className="partner-logo" aria-hidden="true"><span>{mark}</span><i /></div><small>{type}</small><h3>{name}</h3><p>{detail}</p></button> : <a className="partner" key={name} href="https://space.bilibili.com/15346174" target="_blank" rel="noreferrer"><div className="partner-logo" aria-hidden="true"><span>{mark}</span><i /></div><small>{type}</small><h3>{name}</h3><p>{detail}</p></a>)}</div></section>
+    <section id="join" className="join"><p className="eyebrow">{t.channel}</p><h2 className="reveal">{t.join}</h2><div className="join-row reveal"><p>{t.joinText}</p><button className="cta" type="button" onClick={() => setActiveModal("join")} aria-haspopup="dialog">{t.cta} <b>→</b></button></div></section><footer><span>© 2026 CHAOS ARBITER</span><span>{t.footer}</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">粤ICP备2026130616号</a></footer>
+    {modal && <div className="qr-modal" role="presentation" onMouseDown={() => setActiveModal(null)}><section className="qr-terminal" role="dialog" aria-modal="true" aria-labelledby="channel-modal-title" onMouseDown={(event) => event.stopPropagation()}><button className="qr-close" type="button" onClick={() => setActiveModal(null)} aria-label={t.close}>×</button><p className="eyebrow">{modal.eyebrow}</p><h2 id="channel-modal-title">{modal.title}</h2><img className="join-qr" src={modal.image} alt={modal.alt} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = modal.fallback; }} /><p>{modal.lead}</p></section></div>}
   </main>;
 }

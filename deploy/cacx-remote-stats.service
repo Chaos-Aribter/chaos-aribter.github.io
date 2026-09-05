@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh CACX EVE remote statistics cache
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=CACX_STATS_FILE=/var/www/cacx-online/current/data/remote-stats.json
+ExecStart=/usr/bin/python3 /opt/cacx-online/refresh_remote_stats.py

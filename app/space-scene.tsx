@@ -5,6 +5,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
+const CDN_ORIGIN = "https://cdn.cacx.online";
+
 /** Lightweight flagship stand-in. When the converted Avatar model is ready,
  * replace this group with GLTFLoader + its .glb; camera choreography stays. */
 function makeAmarrCapital() {
@@ -62,10 +64,10 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
     const fallback = makeAmarrCapital();
     shipRig.add(fallback);
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("/draco/");
+    dracoLoader.setDecoderPath(`${CDN_ORIGIN}/draco/`);
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
-    loader.load("/models/avatar.glb", (gltf) => {
+    loader.load(`${CDN_ORIGIN}/models/avatar.glb`, (gltf) => {
       const avatar = gltf.scene;
       avatar.updateMatrixWorld(true);
       const bounds = new THREE.Box3().setFromObject(avatar);
