@@ -30,6 +30,9 @@ jobs:
           python-version: "3.12"
       - name: Refresh EVE statistics cache
         run: python3 scripts/refresh_remote_stats.py
+        # Third-party ESI/zKillboard outages must not block a site deployment:
+        # the checked-in cache remains available until the next successful run.
+        continue-on-error: true
       - name: Commit refreshed cache
         if: github.event_name != 'push'
         run: |
