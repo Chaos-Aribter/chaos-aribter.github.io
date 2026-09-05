@@ -6,6 +6,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 const CDN_ORIGIN = "https://cdn.cacx.online";
+const LOCAL_ASSET_ORIGIN = ".";
 
 /** Lightweight flagship stand-in. When the converted Avatar model is ready,
  * replace this group with GLTFLoader + its .glb; camera choreography stays. */
@@ -63,35 +64,46 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
     // Keep a small procedural fallback until the real Avatar asset is ready.
     const fallback = makeAmarrCapital();
     shipRig.add(fallback);
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath(`${CDN_ORIGIN}/draco/`);
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-    loader.load(`${CDN_ORIGIN}/models/avatar.glb`, (gltf) => {
-      const avatar = gltf.scene;
-      avatar.updateMatrixWorld(true);
-      const bounds = new THREE.Box3().setFromObject(avatar);
-      const size = bounds.getSize(new THREE.Vector3());
-      const center = bounds.getCenter(new THREE.Vector3());
-      const scale = 5.1 / Math.max(size.x, size.y, size.z);
-      avatar.scale.setScalar(scale);
-      avatar.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
-      avatar.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.castShadow = false;
-          object.frustumCulled = false;
-        }
+    let activeDracoLoader: DRACOLoader | null = null;
+    let loadedAvatar = false;
+    const loadAvatar = (origin: string, canRetry: boolean) => {
+      activeDracoLoader?.dispose();
+      const dracoLoader = new DRACOLoader();
+      dracoLoader.setDecoderPath(`${origin}/draco/`);
+      activeDracoLoader = dracoLoader;
+      const loader = new GLTFLoader();
+      loader.setDRACOLoader(dracoLoader);
+      loader.load(`${origin}/models/avatar.glb`, (gltf) => {
+        if (loadedAvatar) return;
+        loadedAvatar = true;
+        const avatar = gltf.scene;
+        avatar.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(avatar);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const scale = 5.1 / Math.max(size.x, size.y, size.z);
+        avatar.scale.setScalar(scale);
+        avatar.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+        avatar.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.castShadow = false;
+            object.frustumCulled = false;
+          }
+        });
+        shipRig.remove(fallback);
+        shipRig.add(avatar);
+        onAssetProgress(1);
+        onAssetReady();
+      }, (event) => {
+        if (event.lengthComputable && event.total > 0) onAssetProgress(Math.min(event.loaded / event.total, .985));
+      }, () => {
+        // Some networks or CDN edges may reject a GLB or Draco worker request.
+        // Retry from the Pages artifact before exposing the procedural stand-in.
+        if (canRetry) loadAvatar(LOCAL_ASSET_ORIGIN, false);
+        else onAssetReady();
       });
-      shipRig.remove(fallback);
-      shipRig.add(avatar);
-      onAssetProgress(1);
-      onAssetReady();
-    }, (event) => {
-      if (event.lengthComputable && event.total > 0) onAssetProgress(Math.min(event.loaded / event.total, .985));
-    }, () => {
-      // The fallback remains visible if the remote asset cannot be decoded.
-      onAssetReady();
-    });
+    };
+    loadAvatar(CDN_ORIGIN, true);
     const stars = new THREE.BufferGeometry(), points = new Float32Array(7200);
     for (let i = 0; i < points.length; i += 3) { points[i] = (Math.random() - .5) * 52; points[i + 1] = (Math.random() - .5) * 32; points[i + 2] = -Math.random() * 42; }
     stars.setAttribute("position", new THREE.BufferAttribute(points, 3));
@@ -105,7 +117,7 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
       shipRig.position.y = 1.3 + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(-.35, -.75, Math.min(p * 1.1, 1)); shipRig.scale.setScalar(THREE.MathUtils.lerp(1.4, 1.62, Math.min(p * 1.1, 1)));
       renderer.render(scene, camera); frame = requestAnimationFrame(render);
     }; render();
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); dracoLoader.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
   }, []);
   return <div ref={host} style={{ width: "100%", height: "100%" }} />;
 }
