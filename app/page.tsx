@@ -53,6 +53,7 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [assetProgress, setAssetProgress] = useState(.025);
   const [assetReady, setAssetReady] = useState(false);
+  const [sceneStarted, setSceneStarted] = useState(false);
   const [displayProgress, setDisplayProgress] = useState(.025);
   const [loaderComplete, setLoaderComplete] = useState(false);
   const [activeModal, setActiveModal] = useState<"join" | "wechat" | null>(null);
@@ -100,6 +101,18 @@ export default function Home() {
       .catch(() => { /* Keep the embedded fallback when the cache is temporarily unavailable. */ });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    // Dynamic WebGL code is requested after the page shell. Browser APIs do
+    // not expose byte-level progress for an ES module, so represent this
+    // bounded bootstrap phase separately. It never completes the loader:
+    // only SpaceScene can do that after avatar.glb has parsed successfully.
+    if (sceneStarted || assetReady) return;
+    const timer = window.setInterval(() => {
+      setAssetProgress((value) => Math.min(.1, value + .006));
+    }, 240);
+    return () => window.clearInterval(timer);
+  }, [assetReady, sceneStarted]);
 
   useEffect(() => {
     // Network progress can stop at an arbitrary value while Three.js decodes
@@ -152,7 +165,7 @@ export default function Home() {
   return <main ref={root} className="journey" lang={locale === "zh" ? "zh-CN" : "en"}>
     <a className="skip" href="#doctrine">{t.skip}</a><div className="loader" aria-hidden="true"><p>{t.loader} // {Math.round(displayProgress * 100)}%</p><span><i className="loader-line" style={{ transform: `scaleX(${displayProgress})` }} /></span></div><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
     <nav><a className="brand" href="#top" onClick={(event) => navigateTo(event, "#top")}><strong>混沌仲裁者</strong><span>CHAOS ARBITER//</span></a><div><a href="#doctrine" onClick={(event) => navigateTo(event, "#doctrine")}>{t.nav[0]}</a><a href="#intel" onClick={(event) => navigateTo(event, "#intel")}>{t.nav[1]}</a><a href="#join" onClick={(event) => navigateTo(event, "#join")}>{t.nav[2]}</a></div><div className="nav-tools"><button className="locale" onClick={() => setLocale(locale === "zh" ? "en" : "zh")} aria-label={t.switchLabel}>{t.lang}</button></div></nav>
-    <section id="top" className="hero"><div className="hero-stage"><div className="scene" aria-hidden="true"><SpaceScene onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className={`hero-reveal hero-title ${locale === "zh" ? "hero-title-zh" : "hero-title-en"}`}><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></div></section>
+    <section id="top" className="hero"><div className="hero-stage"><div className="scene" aria-hidden="true"><SpaceScene onAssetStart={() => setSceneStarted(true)} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className={`hero-reveal hero-title ${locale === "zh" ? "hero-title-zh" : "hero-title-en"}`}><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></div></section>
     <section id="intel" className="section intel"><div className="reveal"><p className="eyebrow">{t.intel}</p><h2>{t.intelTitle}</h2><div className="metrics">{displayedMetrics.map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div></div><div className="radar reveal" /></section>
     <section className="resources section"><header className="reveal"><p className="eyebrow">{t.resourcesEyebrow}</p><h2>{t.resourcesTitle}</h2><p>{t.resourcesLead}</p></header><div className="resource-list reveal">{t.resources.map(([number, title, body]) => <article key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p></article>)}</div></section>
     <section id="doctrine" className="section"><header className="reveal"><p className="eyebrow">{t.doctrine}</p><h2>{t.doctrineTitle}</h2><p>{t.doctrineLead}</p></header><div className="op-list reveal">{t.ops.map(([number, title, body]) => <article className="op" key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p><i>↗</i></article>)}</div></section>

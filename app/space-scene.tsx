@@ -7,6 +7,10 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 const CDN_ORIGIN = "https://cdn.cacx.online";
 const LOCAL_ASSET_ORIGIN = ".";
+// The bundled fallback copy is the canonical Avatar file. Keep this in sync
+// with public/models/avatar.glb so progress remains meaningful when a CDN
+// response omits Content-Length.
+const AVATAR_BYTES = 12_352_660;
 
 /** Lightweight flagship stand-in. When the converted Avatar model is ready,
  * replace this group with GLTFLoader + its .glb; camera choreography stays. */
@@ -39,7 +43,8 @@ function makeAmarrCapital() {
   return ship;
 }
 
-export default function SpaceScene({ onAssetProgress, onAssetReady }: {
+export default function SpaceScene({ onAssetStart, onAssetProgress, onAssetReady }: {
+  onAssetStart: () => void;
   onAssetProgress: (value: number) => void;
   onAssetReady: () => void;
 }) {
@@ -62,9 +67,19 @@ export default function SpaceScene({ onAssetProgress, onAssetReady }: {
     // Keep a small procedural fallback until the real Avatar asset is ready.
     const fallback = makeAmarrCapital();
     shipRig.add(fallback);
+    onAssetStart();
+    onAssetProgress(.12);
     let activeDracoLoader: DRACOLoader | null = null;
     let loadedAvatar = false;
     let activeRequest = 0;
+    let requestTimeout: number | undefined;
+    let retryTimeout: number | undefined;
+    const clearPendingTimers = () => {
+      if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
+      if (retryTimeout !== undefined) window.clearTimeout(retryTimeout);
+      requestTimeout = undefined;
+      retryTimeout = undefined;
+    };
     const loadAvatar = (origin: string, canRetry: boolean) => {
       const requestId = ++activeRequest;
       let settled = false;
@@ -77,18 +92,18 @@ export default function SpaceScene({ onAssetProgress, onAssetReady }: {
       const continueWithoutThisRequest = () => {
         if (settled || requestId !== activeRequest || loadedAvatar) return;
         settled = true;
-        window.clearTimeout(timeout);
+        if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
         // A stalled CDN request does not call GLTFLoader's error handler.
-        // Give the Pages copy a chance, then deliberately reveal the stable
-        // procedural stand-in instead of trapping visitors on the loader.
+        // Give the Pages copy a chance. A page is only marked complete once
+        // the real model parses; after both origins fail, retry the CDN.
         if (canRetry) loadAvatar(LOCAL_ASSET_ORIGIN, false);
-        else onAssetReady();
+        else retryTimeout = window.setTimeout(() => loadAvatar(CDN_ORIGIN, true), 2000);
       };
-      const timeout = window.setTimeout(continueWithoutThisRequest, canRetry ? 7000 : 5000);
+      requestTimeout = window.setTimeout(continueWithoutThisRequest, canRetry ? 7000 : 5000);
       loader.load(`${origin}/models/avatar.glb`, (gltf) => {
         if (settled || requestId !== activeRequest || loadedAvatar) return;
         settled = true;
-        window.clearTimeout(timeout);
+        clearPendingTimers();
         loadedAvatar = true;
         const avatar = gltf.scene;
         avatar.updateMatrixWorld(true);
@@ -106,10 +121,15 @@ export default function SpaceScene({ onAssetProgress, onAssetReady }: {
         });
         shipRig.remove(fallback);
         shipRig.add(avatar);
-        onAssetProgress(1);
+        onAssetProgress(.98);
         onAssetReady();
       }, (event) => {
-        if (!settled && requestId === activeRequest && event.lengthComputable && event.total > 0) onAssetProgress(Math.min(event.loaded / event.total, .985));
+        if (settled || requestId !== activeRequest) return;
+        // Some CDN paths stream without Content-Length. The known canonical
+        // GLB size still lets us map received bytes to an honest transfer bar.
+        const total = event.total > 0 ? event.total : AVATAR_BYTES;
+        const transfer = Math.min(event.loaded / total, .995);
+        onAssetProgress(.12 + transfer * .8);
       }, continueWithoutThisRequest);
     };
     loadAvatar(CDN_ORIGIN, true);
@@ -147,7 +167,7 @@ export default function SpaceScene({ onAssetProgress, onAssetReady }: {
       shipRig.scale.setScalar(shipScale);
       renderer.render(scene, camera); frame = requestAnimationFrame(render);
     }; render();
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); clearPendingTimers(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
   }, []);
   return <div ref={host} style={{ width: "100%", height: "100%" }} />;
 }
