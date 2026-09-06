@@ -114,13 +114,15 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
       const { width, height } = container.getBoundingClientRect();
       const aspect = width / height;
       renderer.setSize(width, height, false); camera.aspect = aspect; camera.updateProjectionMatrix();
-      // Match the CSS art-direction bands: ultrawide earns a larger, farther
-      // right vessel; narrow desktop protects the editorial reading column.
+      // Aspect ratio controls the composition; available CSS pixels control
+      // the safety margin. Retina laptops often report a desktop-like aspect
+      // but still need a wider camera to keep the ship's tail on screen.
+      const compactCanvas = width < 1600 || height < 820;
       profile = aspect >= 2
-        ? { cameraStartX: -.18, cameraEndX: -1.8, cameraStartZ: 12.6, cameraEndZ: 7.8, lookStartX: -.9, lookEndX: -.35, shipStartX: .3, shipEndX: -.2, shipY: 1.35, scaleStart: 1.34, scaleEnd: 1.62 }
+        ? { cameraStartX: -.1, cameraEndX: -1.5, cameraStartZ: compactCanvas ? 14 : 13, cameraEndZ: compactCanvas ? 8.6 : 8, lookStartX: -.25, lookEndX: -.12, shipStartX: -.06, shipEndX: -.38, shipY: 1.25, scaleStart: compactCanvas ? 1.08 : 1.2, scaleEnd: compactCanvas ? 1.32 : 1.48 }
         : aspect < 1.5
-          ? { cameraStartX: .1, cameraEndX: -1.05, cameraStartZ: 13, cameraEndZ: 8.7, lookStartX: -.35, lookEndX: -.05, shipStartX: .4, shipEndX: .1, shipY: .95, scaleStart: 1.06, scaleEnd: 1.2 }
-          : { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 12.4, cameraEndZ: 7.7, lookStartX: -.82, lookEndX: -.22, shipStartX: .28, shipEndX: -.25, shipY: 1.18, scaleStart: 1.26, scaleEnd: 1.5 };
+          ? { cameraStartX: .08, cameraEndX: -1.0, cameraStartZ: 14, cameraEndZ: 9, lookStartX: -.02, lookEndX: .1, shipStartX: .05, shipEndX: -.15, shipY: .92, scaleStart: .94, scaleEnd: 1.12 }
+          : { cameraStartX: 0, cameraEndX: -1.35, cameraStartZ: compactCanvas ? 14.2 : 13, cameraEndZ: compactCanvas ? 8.8 : 8, lookStartX: compactCanvas ? -.18 : -.28, lookEndX: compactCanvas ? .02 : -.08, shipStartX: compactCanvas ? -.08 : 0, shipEndX: compactCanvas ? -.34 : -.28, shipY: 1.12, scaleStart: compactCanvas ? 1.02 : 1.16, scaleEnd: compactCanvas ? 1.28 : 1.42 };
     };
     resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
     const render = () => {
