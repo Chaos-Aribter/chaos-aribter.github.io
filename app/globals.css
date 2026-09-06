@@ -32,7 +32,7 @@ nav > div:not(.nav-tools) a:hover { color:var(--signal); }
 .eyebrow, small { color:var(--signal); font:600 13px 'Barlow Condensed'; letter-spacing:.1em; }
 
 .hero { position:relative; min-height:100vh; min-height:100svh; height:100vh; height:100svh; padding:82px 5vw 0; display:flex; align-items:center; overflow:hidden; }
-.hero-copy { width:100%; max-width:1280px; margin:0 auto; }
+.hero-copy { width:min(100%,760px); margin:0; }
 .hero .eyebrow { display:inline-block; margin-bottom:22px; padding:8px 11px; background:var(--signal); color:var(--paper); white-space:nowrap; }
 .hero h1,h2 { margin:0; text-transform:uppercase; font:800 clamp(76px,13vw,205px)/.74 'Barlow Condensed'; letter-spacing:-.045em; }
 .hero h1 { max-width:900px; line-height:1; }
@@ -159,7 +159,7 @@ footer a:hover,footer a:focus-visible { color:var(--paper); outline:none; }
    scale factor. SpaceScene mirrors these aspect-ratio bands for the camera. */
 @media (min-width:721px) and (min-aspect-ratio:2/1) {
   .hero { padding-left:7vw; padding-right:7vw; }
-  .hero-copy { max-width:1420px; }
+  .hero-copy { width:760px; }
   .hero h1 { max-width:760px; }
   .hero-title-zh { max-width:650px; font-size:clamp(112px,8.4vw,172px); }
   .hero .intro { max-width:390px; margin-top:28px; }
@@ -167,13 +167,13 @@ footer a:hover,footer a:focus-visible { color:var(--paper); outline:none; }
 
 @media (min-width:721px) and (min-aspect-ratio:3/2) and (max-aspect-ratio:199/100) {
   .hero { padding-left:6vw; padding-right:6vw; }
-  .hero-copy { max-width:1360px; }
+  .hero-copy { width:720px; }
   .hero-title-zh { max-width:670px; font-size:clamp(98px,9.2vw,170px); }
 }
 
 @media (min-width:721px) and (max-aspect-ratio:149/100) {
   .hero { padding-left:7vw; padding-right:7vw; }
-  .hero-copy { max-width:980px; }
+  .hero-copy { width:590px; }
   .hero h1 { max-width:590px; }
   .hero-title-zh { max-width:560px; font-size:clamp(88px,10.7vw,142px); }
   .hero .intro { max-width:340px; margin-top:26px; }

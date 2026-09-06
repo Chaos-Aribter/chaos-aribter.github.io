@@ -117,10 +117,10 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
       // Match the CSS art-direction bands: ultrawide earns a larger, farther
       // right vessel; narrow desktop protects the editorial reading column.
       profile = aspect >= 2
-        ? { cameraStartX: -.18, cameraEndX: -1.8, cameraStartZ: 12.2, cameraEndZ: 7.5, lookStartX: .45, lookEndX: -.05, shipStartX: -.52, shipEndX: -.95, shipY: 1.45, scaleStart: 1.5, scaleEnd: 1.78 }
+        ? { cameraStartX: -.18, cameraEndX: -1.8, cameraStartZ: 12.6, cameraEndZ: 7.8, lookStartX: -.9, lookEndX: -.35, shipStartX: .3, shipEndX: -.2, shipY: 1.35, scaleStart: 1.34, scaleEnd: 1.62 }
         : aspect < 1.5
-          ? { cameraStartX: .1, cameraEndX: -1.05, cameraStartZ: 12.5, cameraEndZ: 8.4, lookStartX: .72, lookEndX: .24, shipStartX: -.06, shipEndX: -.3, shipY: 1.0, scaleStart: 1.18, scaleEnd: 1.28 }
-          : { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 11.6, cameraEndZ: 7.2, lookStartX: .65, lookEndX: .05, shipStartX: -.35, shipEndX: -.75, shipY: 1.3, scaleStart: 1.4, scaleEnd: 1.62 };
+          ? { cameraStartX: .1, cameraEndX: -1.05, cameraStartZ: 13, cameraEndZ: 8.7, lookStartX: -.35, lookEndX: -.05, shipStartX: .4, shipEndX: .1, shipY: .95, scaleStart: 1.06, scaleEnd: 1.2 }
+          : { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 12.4, cameraEndZ: 7.7, lookStartX: -.82, lookEndX: -.22, shipStartX: .28, shipEndX: -.25, shipY: 1.18, scaleStart: 1.26, scaleEnd: 1.5 };
     };
     resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
     const render = () => {
