@@ -119,10 +119,10 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
       // but still need a wider camera to keep the ship's tail on screen.
       const compactCanvas = width < 1600 || height < 820;
       profile = aspect >= 2
-        ? { cameraStartX: -.1, cameraEndX: -1.5, cameraStartZ: compactCanvas ? 14 : 13, cameraEndZ: compactCanvas ? 8.6 : 8, lookStartX: -.25, lookEndX: -.12, shipStartX: -.06, shipEndX: -.38, shipY: 1.25, scaleStart: compactCanvas ? 1.08 : 1.2, scaleEnd: compactCanvas ? 1.32 : 1.48 }
+        ? { cameraStartX: -.1, cameraEndX: -1.5, cameraStartZ: compactCanvas ? 12.8 : 11.8, cameraEndZ: compactCanvas ? 8 : 7.5, lookStartX: -.25, lookEndX: -.12, shipStartX: -.12, shipEndX: -.46, shipY: 1.25, scaleStart: compactCanvas ? 1.3 : 1.46, scaleEnd: compactCanvas ? 1.5 : 1.68 }
         : aspect < 1.5
-          ? { cameraStartX: .08, cameraEndX: -1.0, cameraStartZ: 14, cameraEndZ: 9, lookStartX: -.02, lookEndX: .1, shipStartX: .05, shipEndX: -.15, shipY: .92, scaleStart: .94, scaleEnd: 1.12 }
-          : { cameraStartX: 0, cameraEndX: -1.35, cameraStartZ: compactCanvas ? 14.2 : 13, cameraEndZ: compactCanvas ? 8.8 : 8, lookStartX: compactCanvas ? -.18 : -.28, lookEndX: compactCanvas ? .02 : -.08, shipStartX: compactCanvas ? -.08 : 0, shipEndX: compactCanvas ? -.34 : -.28, shipY: 1.12, scaleStart: compactCanvas ? 1.02 : 1.16, scaleEnd: compactCanvas ? 1.28 : 1.42 };
+          ? { cameraStartX: .08, cameraEndX: -1.0, cameraStartZ: 12.8, cameraEndZ: 8.5, lookStartX: -.02, lookEndX: .1, shipStartX: -.05, shipEndX: -.24, shipY: .92, scaleStart: 1.18, scaleEnd: 1.36 }
+          : { cameraStartX: 0, cameraEndX: -1.35, cameraStartZ: compactCanvas ? 12.7 : 11.8, cameraEndZ: compactCanvas ? 8.2 : 7.5, lookStartX: compactCanvas ? -.18 : -.28, lookEndX: compactCanvas ? .02 : -.08, shipStartX: compactCanvas ? -.16 : -.08, shipEndX: compactCanvas ? -.44 : -.36, shipY: 1.12, scaleStart: compactCanvas ? 1.26 : 1.42, scaleEnd: compactCanvas ? 1.48 : 1.64 };
     };
     resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
     const render = () => {

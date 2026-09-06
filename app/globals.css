@@ -37,8 +37,12 @@ nav > div:not(.nav-tools) a:hover { color:var(--signal); }
 .hero h1,h2 { margin:0; text-transform:uppercase; font:800 clamp(76px,13vw,205px)/.74 'Barlow Condensed'; letter-spacing:-.045em; }
 .hero h1 { max-width:900px; line-height:1; }
 .hero h1 em { display:block; margin-top:-.14em; color:transparent; font-style:normal; -webkit-text-stroke:2px var(--paper); transform:translateX(-.045em); }
-.hero-title-zh { max-width:690px; font-family:'Noto Sans SC',sans-serif; font-size:clamp(78px,10.4vw,178px); font-weight:700; letter-spacing:-.105em; line-height:.95; }
-.hero-title-zh em { margin-top:-.08em; letter-spacing:-.13em; }
+.hero-title-zh { max-width:690px; font-family:'Noto Sans SC',sans-serif; font-size:clamp(78px,10.4vw,178px); font-weight:700; letter-spacing:-.055em; line-height:.9; }
+/* The offset is applied to the whole second line, never to each glyph.
+   This preserves the deliberate stagger while keeping 仲裁者 readable in
+   browsers that use a fallback CJK font. */
+.hero-title-zh > span { display:block; letter-spacing:-.055em; white-space:nowrap; }
+.hero-title-zh em { margin-top:-.025em; letter-spacing:-.055em; -webkit-text-stroke:1.5px var(--paper); transform:translateX(.075em); white-space:nowrap; }
 .hero-title-en { max-width:900px; }
 .intro { max-width:410px; margin:34px 0 0 6px; padding-left:15px; border-left:5px solid var(--signal); font-size:15px; line-height:1.8; color:#d4d0ca; }
 .scroll { position:absolute; right:5vw; bottom:38px; font:11px 'DM Mono'; letter-spacing:.09em; color:var(--muted); }
