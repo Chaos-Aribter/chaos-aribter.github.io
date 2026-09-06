@@ -63,6 +63,23 @@ jobs:
         run: npm ci
       - name: Build static site
         run: npm run build
+      # GitHub Pages replaces the complete artifact on every deploy.  An edge
+      # cache can still return the previous index.html for a short time,
+      # however, and that document references the previous hashed _next
+      # assets.  Keep the previous assets in a small history branch and merge
+      # them into the new artifact so an old document never becomes unstyled.
+      - name: Restore compatible static assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin pages-static-history:refs/remotes/origin/pages-static-history || true
+          if git rev-parse --verify --quiet origin/pages-static-history; then
+            mkdir -p .pages-static-history
+            git archive origin/pages-static-history | tar -x -C .pages-static-history
+            if [ -d .pages-static-history/static ]; then
+              cp -R .pages-static-history/static/. out/_next/static/
+            fi
+          fi
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
@@ -72,3 +89,21 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      # Persist this build's hashed assets for the following deployment.  This
+      # branch is not a Pages source and does not trigger this workflow.
+      - name: Archive static assets for the next release
+        shell: bash
+        run: |
+          set -euo pipefail
+          history_dir="$RUNNER_TEMP/pages-static-history"
+          git worktree add --detach "$history_dir" origin/pages-static-history
+          mkdir -p "$history_dir/static"
+          cp -R out/_next/static/. "$history_dir/static/"
+          git -C "$history_dir" add static
+          if ! git -C "$history_dir" diff --cached --quiet; then
+            git -C "$history_dir" config user.name "github-actions[bot]"
+            git -C "$history_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C "$history_dir" commit -m "chore: preserve Pages static assets"
+            git -C "$history_dir" push origin HEAD:pages-static-history
+          fi
+          git worktree remove --force "$history_dir"
