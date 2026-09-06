@@ -39,26 +39,24 @@ function makeAmarrCapital() {
   return ship;
 }
 
-export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: {
-  progress: number;
+export default function SpaceScene({ onAssetProgress, onAssetReady }: {
   onAssetProgress: (value: number) => void;
   onAssetReady: () => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
-  const progressRef = useRef(progress); progressRef.current = progress;
 
   useEffect(() => {
     const container = host.current; if (!container) return;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.7)); renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08; renderer.setClearColor("#02050b", 0); container.appendChild(renderer.domElement);
     const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2("#02050b", .043);
-    const camera = new THREE.PerspectiveCamera(47, 1, .1, 100); camera.position.set(0, .15, 11.6);
+    const camera = new THREE.PerspectiveCamera(38, 1, .1, 100); camera.position.set(0, .1, 10.6);
     scene.add(new THREE.HemisphereLight("#b6ddff", "#182435", 2));
     const rim = new THREE.DirectionalLight("#bed9ff", 5.2); rim.position.set(4, 5, 6); scene.add(rim);
     const amber = new THREE.PointLight("#ffbd47", 22, 12); amber.position.set(1.4, 2.2, 3.2); scene.add(amber);
     const blue = new THREE.PointLight("#50dbff", 19, 12); blue.position.set(4, -1, 1); scene.add(blue);
     const shipRig = new THREE.Group();
-    shipRig.position.set(-.35, 1.3, -3.7);
+    shipRig.position.set(-.45, 1.08, -3.7);
     shipRig.rotation.set(-.18, -.58, .23);
     scene.add(shipRig);
     // Keep a small procedural fallback until the real Avatar asset is ready.
@@ -66,15 +64,31 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
     shipRig.add(fallback);
     let activeDracoLoader: DRACOLoader | null = null;
     let loadedAvatar = false;
+    let activeRequest = 0;
     const loadAvatar = (origin: string, canRetry: boolean) => {
+      const requestId = ++activeRequest;
+      let settled = false;
       activeDracoLoader?.dispose();
       const dracoLoader = new DRACOLoader();
       dracoLoader.setDecoderPath(`${origin}/draco/`);
       activeDracoLoader = dracoLoader;
       const loader = new GLTFLoader();
       loader.setDRACOLoader(dracoLoader);
+      const continueWithoutThisRequest = () => {
+        if (settled || requestId !== activeRequest || loadedAvatar) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        // A stalled CDN request does not call GLTFLoader's error handler.
+        // Give the Pages copy a chance, then deliberately reveal the stable
+        // procedural stand-in instead of trapping visitors on the loader.
+        if (canRetry) loadAvatar(LOCAL_ASSET_ORIGIN, false);
+        else onAssetReady();
+      };
+      const timeout = window.setTimeout(continueWithoutThisRequest, canRetry ? 7000 : 5000);
       loader.load(`${origin}/models/avatar.glb`, (gltf) => {
-        if (loadedAvatar) return;
+        if (settled || requestId !== activeRequest || loadedAvatar) return;
+        settled = true;
+        window.clearTimeout(timeout);
         loadedAvatar = true;
         const avatar = gltf.scene;
         avatar.updateMatrixWorld(true);
@@ -95,41 +109,42 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
         onAssetProgress(1);
         onAssetReady();
       }, (event) => {
-        if (event.lengthComputable && event.total > 0) onAssetProgress(Math.min(event.loaded / event.total, .985));
-      }, () => {
-        // Some networks or CDN edges may reject a GLB or Draco worker request.
-        // Retry from the Pages artifact before exposing the procedural stand-in.
-        if (canRetry) loadAvatar(LOCAL_ASSET_ORIGIN, false);
-        else onAssetReady();
-      });
+        if (!settled && requestId === activeRequest && event.lengthComputable && event.total > 0) onAssetProgress(Math.min(event.loaded / event.total, .985));
+      }, continueWithoutThisRequest);
     };
     loadAvatar(CDN_ORIGIN, true);
     const stars = new THREE.BufferGeometry(), points = new Float32Array(7200);
     for (let i = 0; i < points.length; i += 3) { points[i] = (Math.random() - .5) * 52; points[i + 1] = (Math.random() - .5) * 32; points[i + 2] = -Math.random() * 42; }
     stars.setAttribute("position", new THREE.BufferAttribute(points, 3));
     const starMaterial = new THREE.PointsMaterial({ color: "#cfe3ff", size: .035, transparent: true, opacity: .8, sizeAttenuation: true }); scene.add(new THREE.Points(stars, starMaterial));
-    type SceneProfile = { cameraStartX: number; cameraEndX: number; cameraStartZ: number; cameraEndZ: number; lookStartX: number; lookEndX: number; shipStartX: number; shipEndX: number; shipY: number; scaleStart: number; scaleEnd: number };
-    let profile: SceneProfile = { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 11.6, cameraEndZ: 7.2, lookStartX: .65, lookEndX: .05, shipStartX: -.35, shipEndX: -.75, shipY: 1.3, scaleStart: 1.4, scaleEnd: 1.62 };
+    // The canvas lives in the 16:9 hero stage. Its own frame always keeps the
+    // flagship in view, so camera size never needs to guess from the browser's
+    // physical resolution or page scroll position.
+    let cameraZ = 10.6;
+    let shipScale = 1.78;
     const resize = () => {
       const { width, height } = container.getBoundingClientRect();
       const aspect = width / height;
       renderer.setSize(width, height, false); camera.aspect = aspect; camera.updateProjectionMatrix();
-      // Aspect ratio controls the composition; available CSS pixels control
-      // the safety margin. Retina laptops often report a desktop-like aspect
-      // but still need a wider camera to keep the ship's tail on screen.
-      const compactCanvas = width < 1600 || height < 820;
-      profile = aspect >= 2
-        ? { cameraStartX: -.1, cameraEndX: -1.5, cameraStartZ: compactCanvas ? 12.8 : 11.8, cameraEndZ: compactCanvas ? 8 : 7.5, lookStartX: -.25, lookEndX: -.12, shipStartX: -.12, shipEndX: -.46, shipY: 1.25, scaleStart: compactCanvas ? 1.3 : 1.46, scaleEnd: compactCanvas ? 1.5 : 1.68 }
-        : aspect < 1.5
-          ? { cameraStartX: .08, cameraEndX: -1.0, cameraStartZ: 12.8, cameraEndZ: 8.5, lookStartX: -.02, lookEndX: .1, shipStartX: -.05, shipEndX: -.24, shipY: .92, scaleStart: 1.18, scaleEnd: 1.36 }
-          : { cameraStartX: 0, cameraEndX: -1.35, cameraStartZ: compactCanvas ? 12.7 : 11.8, cameraEndZ: compactCanvas ? 8.2 : 7.5, lookStartX: compactCanvas ? -.18 : -.28, lookEndX: compactCanvas ? .02 : -.08, shipStartX: compactCanvas ? -.16 : -.08, shipEndX: compactCanvas ? -.44 : -.36, shipY: 1.12, scaleStart: compactCanvas ? 1.26 : 1.42, scaleEnd: compactCanvas ? 1.48 : 1.64 };
+      // Only the portrait-shaped mobile frame needs a separate fit. Desktop,
+      // laptop and 2K all share the same 16:9 stage composition.
+      const portraitFrame = aspect < 1;
+      cameraZ = portraitFrame ? 12.6 : 10.6;
+      shipScale = portraitFrame ? 1.42 : 1.78;
     };
-    resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
+    resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); let frame = 0;
     const render = () => {
-      const t = clock.getElapsedTime(), p = progressRef.current;
-      desiredCamera.set(THREE.MathUtils.lerp(profile.cameraStartX, profile.cameraEndX, Math.min(p * 1.18, 1)), THREE.MathUtils.lerp(.15, -.5, p), THREE.MathUtils.lerp(profile.cameraStartZ, profile.cameraEndZ, p)); camera.position.lerp(desiredCamera, .03);
-      camera.lookAt(THREE.MathUtils.lerp(profile.lookStartX, profile.lookEndX, p), THREE.MathUtils.lerp(.05, -.35, p), -3.3);
-      shipRig.position.y = profile.shipY + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(profile.shipStartX, profile.shipEndX, Math.min(p * 1.1, 1)); shipRig.scale.setScalar(THREE.MathUtils.lerp(profile.scaleStart, profile.scaleEnd, Math.min(p * 1.1, 1)));
+      const t = clock.getElapsedTime();
+      camera.position.set(0, .1, cameraZ);
+      camera.lookAt(0, -.05, -3.3);
+      shipRig.position.y = 1.08 + Math.sin(t * .22) * .08;
+      shipRig.rotation.z = .23 + Math.sin(t * .16) * .012;
+      shipRig.rotation.y = -.58;
+      // The Avatar's long stern extends farther to camera-right than its
+      // circular bow does to camera-left. Offset its true centre slightly so
+      // the complete silhouette sits inside the dedicated model frame.
+      shipRig.position.x = -.45;
+      shipRig.scale.setScalar(shipScale);
       renderer.render(scene, camera); frame = requestAnimationFrame(render);
     }; render();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
