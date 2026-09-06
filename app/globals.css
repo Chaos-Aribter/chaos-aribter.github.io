@@ -7,7 +7,7 @@ body { margin:0; overflow-x:hidden; background:var(--ink); color:var(--paper); f
 a { color:inherit; text-decoration:none; }
 button { font:inherit; }
 .journey { position:relative; isolation:isolate; }
-.scene { position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.92; filter:contrast(1.04) saturate(.92); }
+.scene { position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.92; filter:contrast(1.04) saturate(.92); }
 .nebula { position:fixed; inset:0; z-index:-3; pointer-events:none; opacity:.58; background:linear-gradient(90deg,rgba(2,5,11,.7) 0%,rgba(2,5,11,.48) 31%,rgba(2,5,11,.22) 67%,rgba(2,5,11,.48) 100%),linear-gradient(180deg,rgba(2,5,11,.26),rgba(2,5,11,.08) 48%,rgba(2,5,11,.48)),url("https://cdn.cacx.online/images/new-eden-nebula-v2.png") center/cover no-repeat; filter:saturate(.88) contrast(1.05); animation:nebula-drift 20s ease-in-out infinite alternate; }
 .grain { position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.025; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 @keyframes nebula-drift { to { transform:translate3d(-2%,1%,0) scale(1.04); } }
@@ -31,18 +31,17 @@ nav > div:not(.nav-tools) a:hover { color:var(--signal); }
 .loader i { display:block; width:100%; height:100%; background:var(--signal); transform-origin:left; transition:transform .12s linear; }
 .eyebrow, small { color:var(--signal); font:600 13px 'Barlow Condensed'; letter-spacing:.1em; }
 
-.hero { position:relative; min-height:100vh; min-height:100svh; height:100vh; height:100svh; overflow:hidden; }
-.hero-stage { --hero-scale:1; position:absolute; top:50%; left:50%; width:1920px; height:998px; transform:translate(-50%,-50%) scale(var(--hero-scale)); transform-origin:center; }
-.hero-copy { position:absolute; z-index:1; top:250px; left:132px; width:760px; }
+.hero { position:relative; min-height:100vh; min-height:100svh; height:100vh; height:100svh; padding:82px 5vw 0; display:flex; align-items:center; overflow:hidden; }
+.hero-copy { width:100%; max-width:1280px; margin:0 auto; }
 .hero .eyebrow { display:inline-block; margin-bottom:22px; padding:8px 11px; background:var(--signal); color:var(--paper); white-space:nowrap; }
 .hero h1,h2 { margin:0; text-transform:uppercase; font:800 clamp(76px,13vw,205px)/.74 'Barlow Condensed'; letter-spacing:-.045em; }
 .hero h1 { max-width:900px; line-height:1; }
 .hero h1 em { display:block; margin-top:-.14em; color:transparent; font-style:normal; -webkit-text-stroke:2px var(--paper); transform:translateX(-.045em); }
-.hero-title-zh { max-width:690px; font-family:'Noto Sans SC',sans-serif; font-size:178px; font-weight:700; letter-spacing:-.105em; line-height:.95; }
+.hero-title-zh { max-width:690px; font-family:'Noto Sans SC',sans-serif; font-size:clamp(78px,10.4vw,178px); font-weight:700; letter-spacing:-.105em; line-height:.95; }
 .hero-title-zh em { margin-top:-.08em; letter-spacing:-.13em; }
-.hero-title-en { max-width:900px; font-size:205px; }
+.hero-title-en { max-width:900px; }
 .intro { max-width:410px; margin:34px 0 0 6px; padding-left:15px; border-left:5px solid var(--signal); font-size:15px; line-height:1.8; color:#d4d0ca; }
-.scroll { position:absolute; z-index:1; right:92px; bottom:48px; font:11px 'DM Mono'; letter-spacing:.09em; color:var(--muted); }
+.scroll { position:absolute; right:5vw; bottom:38px; font:11px 'DM Mono'; letter-spacing:.09em; color:var(--muted); }
 
 .section,.join { position:relative; padding:15vh 7vw; border-top:1px solid var(--line); background:#131313; }
 .section::before,.join::before { content:""; position:absolute; z-index:-1; width:28vw; height:38px; top:-1px; right:7vw; background:var(--signal); clip-path:polygon(12% 0,100% 0,88% 100%,0 100%); }
@@ -155,9 +154,34 @@ footer a:hover,footer a:focus-visible { color:var(--paper); outline:none; }
 /* At laptop/tablet widths Chinese glyphs need their own vertical rhythm.
    The global display-heading line-height is intentionally compact, but made
    the two-line hero collide before the mobile breakpoint applied. */
+/* Art direction profiles: the copy and the ship intentionally receive a
+   different composition for each desktop canvas, rather than one universal
+   scale factor. SpaceScene mirrors these aspect-ratio bands for the camera. */
+@media (min-width:721px) and (min-aspect-ratio:2/1) {
+  .hero { padding-left:7vw; padding-right:7vw; }
+  .hero-copy { max-width:1420px; }
+  .hero h1 { max-width:760px; }
+  .hero-title-zh { max-width:650px; font-size:clamp(112px,8.4vw,172px); }
+  .hero .intro { max-width:390px; margin-top:28px; }
+}
+
+@media (min-width:721px) and (min-aspect-ratio:3/2) and (max-aspect-ratio:199/100) {
+  .hero { padding-left:6vw; padding-right:6vw; }
+  .hero-copy { max-width:1360px; }
+  .hero-title-zh { max-width:670px; font-size:clamp(98px,9.2vw,170px); }
+}
+
+@media (min-width:721px) and (max-aspect-ratio:149/100) {
+  .hero { padding-left:7vw; padding-right:7vw; }
+  .hero-copy { max-width:980px; }
+  .hero h1 { max-width:590px; }
+  .hero-title-zh { max-width:560px; font-size:clamp(88px,10.7vw,142px); }
+  .hero .intro { max-width:340px; margin-top:26px; }
+}
+
 @media (max-width:720px) {
   nav { height:68px; padding:0 5vw; grid-template-columns:1fr auto; } nav > div:not(.nav-tools) { display:none; } .nav-tools b { display:none; }
-  .hero { min-height:740px; height:110vh; padding:68px 7vw 0; } .hero-stage { position:relative; top:auto; left:auto; width:100%; height:100%; transform:none; } .hero-copy { top:50%; left:7vw; width:86vw; transform:translateY(-44%); } .hero h1 { font-size:25vw; } .hero-title-zh { font-size:25vw; } .hero-title-en { font-size:25vw; } .hero .eyebrow { font-size:16px; } .scroll { right:7vw; bottom:38px; }
+  .hero { min-height:740px; height:110vh; padding:68px 7vw 0; } .hero h1 { font-size:25vw; } .hero-title-zh { font-size:25vw; } .hero-title-en { font-size:25vw; } .hero .eyebrow { font-size:16px; } .scroll { right:7vw; bottom:38px; }
   .section,.join { padding:13vh 7vw; } .section::before,.join::before { width:48vw; right:7vw; }
   .section header { display:block; min-height:0; margin-bottom:8vh; } .section header .eyebrow { position:static; width:max-content; margin-bottom:30px; font-size:16px; } .section h2 { font-size:15vw; white-space:normal; } .section header > p:last-child { margin-top:32px; font-size:16px; }
   .op { grid-template-columns:55px 1fr 20px; gap:11px; min-height:0; } .op small { font-size:22px; } .op p { grid-column:2/4; margin-bottom:10px; }

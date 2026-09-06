@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { type CSSProperties, type MouseEvent, useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 
 const SpaceScene = dynamic(() => import("./space-scene"), { ssr: false });
 gsap.registerPlugin(ScrollTrigger);
@@ -57,7 +57,6 @@ export default function Home() {
   const [loaderComplete, setLoaderComplete] = useState(false);
   const [activeModal, setActiveModal] = useState<"join" | "wechat" | null>(null);
   const [remoteStats, setRemoteStats] = useState<RemoteStats>(fallbackStats);
-  const [heroScale, setHeroScale] = useState(1);
   const displayProgressRef = useRef(.025);
   const [locale, setLocale] = useState<keyof typeof copy>("zh");
   const t = copy[locale];
@@ -143,18 +142,6 @@ export default function Home() {
     };
   }, [activeModal]);
 
-  useEffect(() => {
-    // Desktop hero artwork uses one 1920 × 998 coordinate system. Scaling the
-    // stage as a whole keeps the ship and typography in the same composition.
-    const updateHeroScale = () => {
-      if (window.innerWidth <= 720) return setHeroScale(1);
-      setHeroScale(Math.min(window.innerWidth / 1920, Math.max(720, window.innerHeight - 82) / 998));
-    };
-    updateHeroScale();
-    window.addEventListener("resize", updateHeroScale);
-    return () => window.removeEventListener("resize", updateHeroScale);
-  }, []);
-
   const displayedMetrics = [
     [formatNumber(remoteStats.members), t.metrics[0][1]],
     [formatIsk(remoteStats.isk), t.metrics[1][1]],
@@ -163,9 +150,9 @@ export default function Home() {
   ];
 
   return <main ref={root} className="journey" lang={locale === "zh" ? "zh-CN" : "en"}>
-    <a className="skip" href="#doctrine">{t.skip}</a><div className="loader" aria-hidden="true"><p>{t.loader} // {Math.round(displayProgress * 100)}%</p><span><i className="loader-line" style={{ transform: `scaleX(${displayProgress})` }} /></span></div><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
+    <a className="skip" href="#doctrine">{t.skip}</a><div className="loader" aria-hidden="true"><p>{t.loader} // {Math.round(displayProgress * 100)}%</p><span><i className="loader-line" style={{ transform: `scaleX(${displayProgress})` }} /></span></div><div className="scene" aria-hidden="true"><SpaceScene progress={progress} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
     <nav><a className="brand" href="#top" onClick={(event) => navigateTo(event, "#top")}><strong>混沌仲裁者</strong><span>CHAOS ARBITER//</span></a><div><a href="#doctrine" onClick={(event) => navigateTo(event, "#doctrine")}>{t.nav[0]}</a><a href="#intel" onClick={(event) => navigateTo(event, "#intel")}>{t.nav[1]}</a><a href="#join" onClick={(event) => navigateTo(event, "#join")}>{t.nav[2]}</a></div><div className="nav-tools"><button className="locale" onClick={() => setLocale(locale === "zh" ? "en" : "zh")} aria-label={t.switchLabel}>{t.lang}</button></div></nav>
-    <section id="top" className="hero"><div className="hero-stage" style={{ "--hero-scale": heroScale } as CSSProperties}><div className="scene" aria-hidden="true"><SpaceScene progress={progress} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className={`hero-reveal hero-title ${locale === "zh" ? "hero-title-zh" : "hero-title-en"}`}><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></div></section>
+    <section id="top" className="hero"><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className={`hero-reveal hero-title ${locale === "zh" ? "hero-title-zh" : "hero-title-en"}`}><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></section>
     <section id="intel" className="section intel"><div className="reveal"><p className="eyebrow">{t.intel}</p><h2>{t.intelTitle}</h2><div className="metrics">{displayedMetrics.map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div></div><div className="radar reveal" /></section>
     <section className="resources section"><header className="reveal"><p className="eyebrow">{t.resourcesEyebrow}</p><h2>{t.resourcesTitle}</h2><p>{t.resourcesLead}</p></header><div className="resource-list reveal">{t.resources.map(([number, title, body]) => <article key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p></article>)}</div></section>
     <section id="doctrine" className="section"><header className="reveal"><p className="eyebrow">{t.doctrine}</p><h2>{t.doctrineTitle}</h2><p>{t.doctrineLead}</p></header><div className="op-list reveal">{t.ops.map(([number, title, body]) => <article className="op" key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p><i>↗</i></article>)}</div></section>

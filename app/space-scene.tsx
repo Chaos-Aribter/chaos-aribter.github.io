@@ -108,13 +108,26 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
     for (let i = 0; i < points.length; i += 3) { points[i] = (Math.random() - .5) * 52; points[i + 1] = (Math.random() - .5) * 32; points[i + 2] = -Math.random() * 42; }
     stars.setAttribute("position", new THREE.BufferAttribute(points, 3));
     const starMaterial = new THREE.PointsMaterial({ color: "#cfe3ff", size: .035, transparent: true, opacity: .8, sizeAttenuation: true }); scene.add(new THREE.Points(stars, starMaterial));
-    const resize = () => { const { width, height } = container.getBoundingClientRect(); renderer.setSize(width, height, false); camera.aspect = width / height; camera.updateProjectionMatrix(); };
+    type SceneProfile = { cameraStartX: number; cameraEndX: number; cameraStartZ: number; cameraEndZ: number; lookStartX: number; lookEndX: number; shipStartX: number; shipEndX: number; shipY: number; scaleStart: number; scaleEnd: number };
+    let profile: SceneProfile = { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 11.6, cameraEndZ: 7.2, lookStartX: .65, lookEndX: .05, shipStartX: -.35, shipEndX: -.75, shipY: 1.3, scaleStart: 1.4, scaleEnd: 1.62 };
+    const resize = () => {
+      const { width, height } = container.getBoundingClientRect();
+      const aspect = width / height;
+      renderer.setSize(width, height, false); camera.aspect = aspect; camera.updateProjectionMatrix();
+      // Match the CSS art-direction bands: ultrawide earns a larger, farther
+      // right vessel; narrow desktop protects the editorial reading column.
+      profile = aspect >= 2
+        ? { cameraStartX: -.18, cameraEndX: -1.8, cameraStartZ: 12.2, cameraEndZ: 7.5, lookStartX: .45, lookEndX: -.05, shipStartX: -.52, shipEndX: -.95, shipY: 1.45, scaleStart: 1.5, scaleEnd: 1.78 }
+        : aspect < 1.5
+          ? { cameraStartX: .1, cameraEndX: -1.05, cameraStartZ: 12.5, cameraEndZ: 8.4, lookStartX: .72, lookEndX: .24, shipStartX: -.06, shipEndX: -.3, shipY: 1.0, scaleStart: 1.18, scaleEnd: 1.28 }
+          : { cameraStartX: 0, cameraEndX: -1.5, cameraStartZ: 11.6, cameraEndZ: 7.2, lookStartX: .65, lookEndX: .05, shipStartX: -.35, shipEndX: -.75, shipY: 1.3, scaleStart: 1.4, scaleEnd: 1.62 };
+    };
     resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
     const render = () => {
       const t = clock.getElapsedTime(), p = progressRef.current;
-      desiredCamera.set(THREE.MathUtils.lerp(0, -1.5, Math.min(p * 1.18, 1)), THREE.MathUtils.lerp(.15, -.5, p), THREE.MathUtils.lerp(11.6, 7.2, p)); camera.position.lerp(desiredCamera, .03);
-      camera.lookAt(THREE.MathUtils.lerp(.65, .05, p), THREE.MathUtils.lerp(.05, -.35, p), -3.3);
-      shipRig.position.y = 1.3 + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(-.35, -.75, Math.min(p * 1.1, 1)); shipRig.scale.setScalar(THREE.MathUtils.lerp(1.4, 1.62, Math.min(p * 1.1, 1)));
+      desiredCamera.set(THREE.MathUtils.lerp(profile.cameraStartX, profile.cameraEndX, Math.min(p * 1.18, 1)), THREE.MathUtils.lerp(.15, -.5, p), THREE.MathUtils.lerp(profile.cameraStartZ, profile.cameraEndZ, p)); camera.position.lerp(desiredCamera, .03);
+      camera.lookAt(THREE.MathUtils.lerp(profile.lookStartX, profile.lookEndX, p), THREE.MathUtils.lerp(.05, -.35, p), -3.3);
+      shipRig.position.y = profile.shipY + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(profile.shipStartX, profile.shipEndX, Math.min(p * 1.1, 1)); shipRig.scale.setScalar(THREE.MathUtils.lerp(profile.scaleStart, profile.scaleEnd, Math.min(p * 1.1, 1)));
       renderer.render(scene, camera); frame = requestAnimationFrame(render);
     }; render();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
