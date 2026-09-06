@@ -101,10 +101,12 @@ nav > div:not(.nav-tools) a:hover { color:var(--signal); }
 .why-list p { max-width:300px; margin:0; color:var(--muted); font-size:14px; line-height:1.75; }
 
 .resources { min-height:auto; background:linear-gradient(145deg,#171717 0%,#111 56%,#171313 100%); }
-.resources header { min-height:0; margin-bottom:68px; }
-.resources header .eyebrow { position:static; display:inline-block; width:max-content; margin-bottom:28px; }
-.resources header h2 { grid-column:1 / -1; max-width:1120px; font-size:clamp(64px,8vw,122px); }
-.resources header > p:last-child { grid-column:1; margin-top:30px; }
+/* Editorial sections share one anchor: label, headline and lead begin on the
+   left content rail; only the cards extend into the full grid below. */
+.resources header,#doctrine header,.partners header { min-height:0; margin-bottom:68px; }
+.resources header .eyebrow,#doctrine header .eyebrow,.partners header .eyebrow { position:static; display:inline-block; width:max-content; margin-bottom:28px; }
+.resources header h2,#doctrine header h2,.partners header h2 { grid-column:1 / -1; max-width:1120px; font-size:clamp(64px,8vw,122px); }
+.resources header > p:last-child,#doctrine header > p:last-child,.partners header > p:last-child { grid-column:1; margin-top:30px; }
 .resource-list { display:grid; grid-template-columns:repeat(2,1fr); border-top:4px solid var(--paper); border-left:1px solid var(--line); }
 .resource-list article { min-height:255px; padding:31px; display:flex; flex-direction:column; border-right:1px solid var(--line); border-bottom:1px solid var(--line); background:linear-gradient(155deg,rgba(39,51,67,.2),transparent 45%); transition:background .2s; }
 .resource-list article:hover { background:linear-gradient(155deg,rgba(229,60,55,.14),rgba(39,51,67,.15) 55%); }
@@ -169,7 +171,7 @@ footer a:hover,footer a:focus-visible { color:var(--paper); outline:none; }
   .op { grid-template-columns:55px 1fr 20px; gap:11px; min-height:0; } .op small { font-size:22px; } .op p { grid-column:2/4; margin-bottom:10px; }
   .comparison header,.why-cacx header { margin-bottom:42px; } .comparison header h2 { font-size:clamp(30px,7.6vw,54px); } .comparison header h2:lang(en) { font-size:clamp(17px,4.2vw,30px); } .why-cacx header h2 { font-size:15vw; } .comparison header > p:last-child,.why-cacx header > p:last-child { margin-top:28px; }
   .flight-choice,.why-list { grid-template-columns:1fr; } .choice { min-height:0; padding:28px 22px 32px; } .choice > div { gap:16px; } .choice h3 { font-size:13vw; } .choice ul { gap:12px; font-size:14px; } .why-list article { min-height:215px; padding:26px 22px; } .why-list h3 { margin-top:28px; font-size:34px; }
-  .resources header { margin-bottom:42px; } .resources header h2 { font-size:15vw; } .resources header > p:last-child { margin-top:28px; }
+  .resources header,#doctrine header,.partners header { margin-bottom:42px; } .resources header h2,#doctrine header h2,.partners header h2 { font-size:15vw; } .resources header > p:last-child,#doctrine header > p:last-child,.partners header > p:last-child { margin-top:28px; }
   .resource-list { grid-template-columns:1fr; } .resource-list article { min-height:215px; padding:26px 22px; } .resource-list h3 { margin-top:28px; font-size:34px; }
   .intel { display:block; } .intel h2 { font-size:14vw; } .metrics { margin-top:38px; } .metrics div { min-height:145px; padding:19px; } .radar { width:62vw; margin-top:60px; }
   .partner-grid { grid-template-columns:1fr; } .partner { min-height:230px; } .partner h3 { margin-top:37px; }
