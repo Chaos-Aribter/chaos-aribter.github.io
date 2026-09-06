@@ -112,12 +112,9 @@ export default function SpaceScene({ progress, onAssetProgress, onAssetReady }: 
     resize(); const observer = new ResizeObserver(resize); observer.observe(container); const clock = new THREE.Clock(); const desiredCamera = new THREE.Vector3(); let frame = 0;
     const render = () => {
       const t = clock.getElapsedTime(), p = progressRef.current;
-      // A wider aspect ratio otherwise exposes extra space on both sides and
-      // makes the vessel appear to drift into the middle of an ultrawide hero.
-      const wideStageOffset = THREE.MathUtils.clamp((camera.aspect - 1.72) * 1.18, 0, 1.25);
       desiredCamera.set(THREE.MathUtils.lerp(0, -1.5, Math.min(p * 1.18, 1)), THREE.MathUtils.lerp(.15, -.5, p), THREE.MathUtils.lerp(11.6, 7.2, p)); camera.position.lerp(desiredCamera, .03);
       camera.lookAt(THREE.MathUtils.lerp(.65, .05, p), THREE.MathUtils.lerp(.05, -.35, p), -3.3);
-      shipRig.position.y = 1.3 + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(-.35, -.75, Math.min(p * 1.1, 1)) + wideStageOffset; shipRig.scale.setScalar(THREE.MathUtils.lerp(1.4, 1.62, Math.min(p * 1.1, 1)));
+      shipRig.position.y = 1.3 + Math.sin(t * .22) * .1; shipRig.rotation.z = .23 + Math.sin(t * .16) * .014; shipRig.rotation.y = -.58 - p * .12; shipRig.position.x = THREE.MathUtils.lerp(-.35, -.75, Math.min(p * 1.1, 1)); shipRig.scale.setScalar(THREE.MathUtils.lerp(1.4, 1.62, Math.min(p * 1.1, 1)));
       renderer.render(scene, camera); frame = requestAnimationFrame(render);
     }; render();
     return () => { cancelAnimationFrame(frame); observer.disconnect(); stars.dispose(); starMaterial.dispose(); scene.traverse(object => { if (object instanceof THREE.Mesh) { object.geometry.dispose(); const materials = Array.isArray(object.material) ? object.material : [object.material]; materials.forEach(material => material.dispose()); } }); activeDracoLoader?.dispose(); renderer.dispose(); container.removeChild(renderer.domElement); };
