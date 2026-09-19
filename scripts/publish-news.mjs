@@ -14,7 +14,8 @@ function run(...argv) {
 }
 try {
  if (args.includes('--help') || args.includes('-h')) {
-  console.log('用法：sh publish-news.sh ["提交说明"] [--check]\n--check 只检查生成记录和待提交文件，不提交、不推送。');
+  const command = process.platform === 'win32' ? 'publish-news.bat' : 'sh publish-news.sh';
+  console.log(`用法：${command} ["提交说明"] [--check]\n--check 只检查生成记录和待提交文件，不提交、不推送。`);
  } else {
   for (const arg of args) if (arg.startsWith('--') && arg !== '--check') throw new Error(`未知参数：${arg}`);
   if (git('branch','--show-current') !== 'main') throw new Error('请在 main 分支发布，脚本不会自动切换分支。');

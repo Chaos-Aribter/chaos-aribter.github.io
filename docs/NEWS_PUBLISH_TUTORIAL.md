@@ -11,6 +11,28 @@ npm ci
 
 发布还需要 GitHub 仓库推送权限、配置好的 Git 作者信息。仓库 origin 应指向 `Chaos-Aribter/chaos-aribter.github.io`，当前分支为 main。GitHub 的 Settings → Pages 使用 GitHub Actions，并允许现有 Pages 工作流运行。这些账号/仓库配置不会由脚本擅自修改。
 
+### Windows 快速操作
+
+安装 Node.js 22 和 Git for Windows，在项目目录打开命令提示符（CMD），先运行 `npm ci`。以下假定已填写好现有纯文字稿，目录含空格或中文时务必加双引号：
+
+```bat
+REM 第一步：生成并启动本地预览，不提交、不发布
+test-news.bat "content\news\2026-0003\article.md"
+
+REM 浏览器访问 http://127.0.0.1:4173，验收后 Ctrl+C 停止
+REM 第二步：检查待发布内容，不提交、不推送
+publish-news.bat --check
+
+REM 第三步：提交并推送，输入 PUBLISH 后触发 Pages
+publish-news.bat "发布混沌历史新闻"
+```
+
+批量稿件同样支持 `test-news.bat "D:\新闻稿"`，单篇目录支持 `test-news.bat "content\news\2026-0003"`。输入目录是完整数据集，会替换此前生成的数据，详见第 3 节。
+
+只构建不启动预览：`test-news.bat "content\news\2026-0003\article.md" --build-only`；随后可运行 `npm run preview:news`。更换端口时先在 CMD 执行 `set PORT=4174`。原有 `generate-news.bat` 仅生成，不保存发布检查记录；要发布请使用 `test-news.bat`。
+
+在 PowerShell 中调用时加 `.\` 前缀，例如 `.\test-news.bat "content\news\2026-0003\article.md"` 和 `.\publish-news.bat --check`。建议在已打开的终端执行，不直接双击，以便看到失败信息。两个新入口会保留失败退出码，任何校验或构建失败都会停止，不继续预览或发布。`.bat` 与 `.sh` 共用同一套 Node.js 实现。
+
 ## 2. 选择并填写模板
 
 | 类型 | 模板文件 | 首行 | 图片 |

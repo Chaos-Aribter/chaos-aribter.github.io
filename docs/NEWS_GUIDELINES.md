@@ -230,6 +230,7 @@
 
 ## 16. 生成、验收与发布流程（2026-09-19）
 
+- Windows 提供对应的 `test-news.bat` 与 `publish-news.bat`，与 `.sh` 共用 Node.js 流程、生成记录和发布检查；生成测试不自动发布。
 - 提供 `test-news.sh`（生成并预览）与 `publish-news.sh`（提交、推送、触发现有 Pages 工作流）两个独立入口。教程见 `docs/NEWS_PUBLISH_TUTORIAL.md`。
 - 生成不发布；运营完成本地验收后，手动运行发布脚本并输入 PUBLISH，确认本次全部待提交改动。
 - 发布前验证成功构建记录、当前源码、产物与日期一致；变化后须重新生成和验收。只检查可用 `sh publish-news.sh --check`。
