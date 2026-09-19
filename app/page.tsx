@@ -1,6 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { PageLoader } from "./page-loader";
+import { LatestNews } from "./news/latest-news";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
@@ -25,8 +28,8 @@ function formatIsk(value: number) {
 
 const copy = {
   zh: {
-    lang: "EN", switchLabel: "Switch to English", skip: "跳至内容", loader: "正在连接新伊甸", status: "状态",
-    nav: ["军团内容", "军团数据", "加入混沌"], unit: "[ CHAOS ARBITER ]", hero: ["混沌", "仲裁者"], intro: "致力于为成员提供优质内容、营造舒适氛围的综合型 EVE 玩家社区。", scroll: "向下探索",
+    skip: "跳至内容", loader: "正在连接新伊甸", status: "状态",
+    nav: ["军团内容", "军团数据", "新闻资讯", "加入混沌"], unit: "[ CHAOS ARBITER ]", hero: ["混沌", "仲裁者"], intro: "致力于为成员提供优质内容、营造舒适氛围的综合型 EVE 玩家社区。", scroll: "向下探索",
     intel: "[ 军团数据 ]", intelTitle: <>每一个数字背后<br /><em>都是一段故事。</em></>, metrics: [["8,525", "成员"], ["48.27T", "击杀价值"], ["192,733", "击杀舰船"], ["2012", "年 / 成立"]],
     resourcesEyebrow: "[ 军团资源 ]", resourcesTitle: <>价值源自<br /><em>需求。</em></>, resourcesLead: "多处专属内部工业基建，生产体系完善齐全，可覆盖从常规物资、T1 舰船到旗舰级舰船的全门类制造需求。", resources: [["01 /", "内部专属工业建筑", "多处专属内部工业基建，生产体系完善齐全。"], ["02 /", "常态化旗舰 & 战列级别战斗", "成熟的大船作战体系与稳定后勤兜底；合规参战的无畏战损可享受军团专项补损。"], ["03 /", "成熟的制度建设", "LP 制度铭记每个人的付出；多个社区、小组提供大展拳脚的舞台。"], ["04 /", "多样生产环境", "不仅拥有主权区域的生产环境，更能在每个任务区看到混沌成员的身影。"]],
     doctrine: "[ 军团内容 ]", doctrineTitle: <>战斗不是<br /><em>偶然。</em></>, doctrineLead: "我们将成员、舰船与时机编组为可复现的胜利。选择你的作战席位。", ops: [["1 /", "建制对抗", "多种战列级别建制、普遍的旗舰使用，你想玩的大船都有。"], ["2 /", "低安游击", "与低安土著高强度交锋，每一分钟都在战斗。"], ["3 /", "兴趣小组", "多样化的散打内容，不一样的乐趣。"], ["4 /", "从士兵到将军", "成熟的训练机制，让你的指挥梦想不停留在纸上。"]],
@@ -35,17 +38,7 @@ const copy = {
     partnersEyebrow: "[ 关注我们 ]", partnersTitle: <>关注<br /><em>我们。</em></>, partnerLead: "公众号与 Bilibili。", partners: [["WX", "官方渠道", "公众号", "关注军团动态与活动信息"], ["B", "视频平台", "Bilibili", "观看军团内容与作战记录"]],
     channel: "[ 加入混沌 ]", join: <>加入<br /><em>混沌。</em></>, joinText: "扫码加入军团招募群，与我们建立联系。", cta: "扫码加入招募群", qrTitle: <>扫码加入<br /><em>军团群。</em></>, qrLead: "使用 QQ 扫描二维码，加入混沌仲裁者军团群。", wechatChannel: "[ 官方公众号 ]", wechatTitle: <>扫码关注<br /><em>公众号。</em></>, wechatLead: "公众号二维码将在此展示。", assetPending: "二维码待接入", close: "关闭", footer: "新伊甸 // 版权所有"
   },
-  en: {
-    lang: "中", switchLabel: "切换至中文", skip: "Skip to content", loader: "CONNECTING TO NEW EDEN", status: "STATUS",
-    nav: ["CONTENT", "CORPORATION DATA", "JOIN CACX"], unit: "[ CHAOS ARBITER ]", hero: ["CHAOS", "ARBITER"], intro: "A comprehensive EVE player community committed to high-quality content and a comfortable place for its members.", scroll: "SCROLL TO DESCEND",
-    intel: "[ CORPORATION DATA ]", intelTitle: <>EVERY NUMBER<br /><em>HAS A STORY.</em></>, metrics: [["8,525", "MEMBERS"], ["48.27T", "KILL VALUE"], ["192,733", "SHIPS DESTROYED"], ["2012", "FOUNDED"]],
-    resourcesEyebrow: "[ CORPORATION RESOURCES ]", resourcesTitle: <>VALUE COMES<br /><em>FROM DEMAND.</em></>, resourcesLead: "Dedicated internal industry facilities and a complete production system—from standard supplies and T1 hulls to capital ships.", resources: [["01 /", "DEDICATED INDUSTRY", "Internal facilities and a complete production system."], ["02 /", "CAPITAL & BATTLESHIP FLEETS", "A mature capital doctrine, reliable support, and reimbursement for eligible dread losses."], ["03 /", "MATURE SYSTEMS", "LP records every contribution, while groups and communities make room to excel."], ["04 /", "DIVERSE PRODUCTION", "From sovereignty space to mission areas, Chaos pilots build wherever demand exists."]],
-    doctrine: "[ CORPORATION CONTENT ]", doctrineTitle: <>COMBAT IS<br /><em>NO ACCIDENT.</em></>, doctrineLead: "We assemble pilots, ships, and timing into repeatable victories. Find your position in the fleet.", ops: [["1 /", "FORMED COMBAT", "Battlecruiser and capital formations: the big ships you want to fly."], ["2 /", "LOW-SEC ROAMING", "High-intensity engagements with low-sec residents—every minute is a fight."], ["3 /", "INTEREST GROUPS", "A variety of small-gang content and a different kind of fun."], ["4 /", "SOLDIER TO GENERAL", "A mature training system so your command ambitions do not stay on paper."]],
-    compareEyebrow: "SOLO PLAYER // CORPORATION", compareTitle: <>EVE ALONE<br />DOESN&apos;T <em>GO FAR.</em></>, compareLead: "EVE is a demanding MMO: much of its best content begins with a corporation, and daily repetition only matters when shared with dependable pilots.", solo: ["LONE WOLF", "SOLO", ["Much of the game requires a group; solo pilots cannot access it", "Every step is yours alone: procurement · hauling · sales", "Without a social circle, the routine soon runs out of meaning"]], corporation: ["JOIN THE CORP", "IN CORP", ["Unlock group and community content: valuable sites, team PvE, and PVP", "Specialists handle recovery · logistics · courier work", "Find pilots with the same intent—and keep flying together"]],
-    whyEyebrow: "[ WHY CACX ]", whyTitle: <>NEW PILOTS, WHY<br /><em>CHAOS ARBITER?</em></>, whyLead: "A major Chinese-speaking corporation built for new and long-term pilots.", whyPoints: [["01", "A WELCOMING START", "A community designed for new pilots. Start building and fighting from day one."], ["02", "A PROVEN GROWTH PATH", "A tested route that builds strong foundations for whatever you choose later."], ["03", "A THRIVING CHINESE COMMUNITY", "More ways to fly, more pilots to meet, and a friendly culture built to last."]],
-    partnersEyebrow: "[ FOLLOW US ]", partnersTitle: <>FOLLOW<br /><em>US.</em></>, partnerLead: "WeChat Official Account and Bilibili.", partners: [["WX", "OFFICIAL CHANNEL", "WECHAT", "Corporation updates and event information"], ["B", "VIDEO PLATFORM", "BILIBILI", "Corporation stories and battle records"]],
-    channel: "[ JOIN CHAOS ]", join: <>JOIN<br /><em>CHAOS.</em></>, joinText: "Scan the group code to connect with Chaos Arbiter recruitment.", cta: "SCAN TO JOIN", qrTitle: <>SCAN TO JOIN<br /><em>THE CORP.</em></>, qrLead: "Scan the QR code with QQ to join the Chaos Arbiter corporation group.", wechatChannel: "[ WECHAT OFFICIAL ACCOUNT ]", wechatTitle: <>FOLLOW ON<br /><em>WECHAT.</em></>, wechatLead: "The WeChat QR code will appear here.", assetPending: "QR ASSET PENDING", close: "CLOSE", footer: "NEW EDEN // ALL RIGHTS RESERVED"
-  }
+
 } as const;
 
 export default function Home() {
@@ -59,8 +52,7 @@ export default function Home() {
   const [activeModal, setActiveModal] = useState<"join" | "wechat" | null>(null);
   const [remoteStats, setRemoteStats] = useState<RemoteStats>(fallbackStats);
   const displayProgressRef = useRef(.025);
-  const [locale, setLocale] = useState<keyof typeof copy>("zh");
-  const t = copy[locale];
+  const t = copy.zh;
   const modal = activeModal === "join" ? { eyebrow: t.channel, title: t.qrTitle, lead: t.qrLead, image: "https://cdn.cacx.online/images/join-group-qr.png", fallback: "/images/join-group-qr.png", alt: "混沌仲裁者军团群二维码" } : activeModal === "wechat" ? { eyebrow: t.wechatChannel, title: t.wechatTitle, lead: t.wechatLead, image: "https://cdn.cacx.online/images/wechat-qr.png", fallback: "/images/wechat-qr.png", alt: "混沌仲裁者官方公众号二维码" } : null;
 
   const navigateTo = (event: MouseEvent<HTMLAnchorElement>, target: string) => {
@@ -162,10 +154,11 @@ export default function Home() {
     [t.metrics[3][0], t.metrics[3][1]],
   ];
 
-  return <main ref={root} className="journey" lang={locale === "zh" ? "zh-CN" : "en"}>
-    <a className="skip" href="#doctrine">{t.skip}</a><div className="loader" aria-hidden="true"><p>{t.loader} // {Math.round(displayProgress * 100)}%</p><span><i className="loader-line" style={{ transform: `scaleX(${displayProgress})` }} /></span></div><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
-    <nav><a className="brand" href="#top" onClick={(event) => navigateTo(event, "#top")}><strong>混沌仲裁者</strong><span>CHAOS ARBITER//</span></a><div><a href="#doctrine" onClick={(event) => navigateTo(event, "#doctrine")}>{t.nav[0]}</a><a href="#intel" onClick={(event) => navigateTo(event, "#intel")}>{t.nav[1]}</a><a href="#join" onClick={(event) => navigateTo(event, "#join")}>{t.nav[2]}</a></div><div className="nav-tools"><button className="locale" onClick={() => setLocale(locale === "zh" ? "en" : "zh")} aria-label={t.switchLabel}>{t.lang}</button></div></nav>
-    <section id="top" className="hero"><div className="hero-stage"><div className="scene" aria-hidden="true"><SpaceScene onAssetStart={() => setSceneStarted(true)} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className={`hero-reveal hero-title ${locale === "zh" ? "hero-title-zh" : "hero-title-en"}`}><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></div></section>
+  return <main ref={root} className="journey" lang="zh-CN">
+    <a className="skip" href="#doctrine">{t.skip}</a><PageLoader progress={displayProgress} label={t.loader} /><div className="nebula" aria-hidden="true" /><div className="grain" /><div className="progress" style={{ transform: `scaleX(${progress})` }} />
+    <nav aria-label="主导航"><a className="brand" href="#top" onClick={(event) => navigateTo(event, "#top")}><strong>混沌仲裁者</strong><span>CHAOS ARBITER//</span></a><div><a href="#doctrine" onClick={(event) => navigateTo(event, "#doctrine")}>{t.nav[0]}</a><a href="#intel" onClick={(event) => navigateTo(event, "#intel")}>{t.nav[1]}</a><Link href="/news">{t.nav[2]}</Link><a href="#join" onClick={(event) => navigateTo(event, "#join")}>{t.nav[3]}</a></div></nav>
+    <section id="top" className="hero"><div className="hero-stage"><div className="scene" aria-hidden="true"><SpaceScene onAssetStart={() => setSceneStarted(true)} onAssetProgress={setAssetProgress} onAssetReady={() => setAssetReady(true)} /></div><div className="hero-copy"><p className="eyebrow hero-reveal">{t.unit}</p><h1 className="hero-reveal hero-title hero-title-zh"><span>{t.hero[0]}</span> <em>{t.hero[1]}</em></h1><p className="hero-reveal intro">{t.intro}</p></div><p className="scroll hero-reveal">{t.scroll}</p></div></section>
+    <LatestNews />
     <section id="intel" className="section intel"><div className="reveal"><p className="eyebrow">{t.intel}</p><h2>{t.intelTitle}</h2><div className="metrics">{displayedMetrics.map(([value, label]) => <div key={label}><strong>{value}</strong><small>{label}</small></div>)}</div></div><div className="radar reveal" /></section>
     <section className="resources section"><header className="reveal"><p className="eyebrow">{t.resourcesEyebrow}</p><h2>{t.resourcesTitle}</h2><p>{t.resourcesLead}</p></header><div className="resource-list reveal">{t.resources.map(([number, title, body]) => <article key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p></article>)}</div></section>
     <section id="doctrine" className="section"><header className="reveal"><p className="eyebrow">{t.doctrine}</p><h2>{t.doctrineTitle}</h2><p>{t.doctrineLead}</p></header><div className="op-list reveal">{t.ops.map(([number, title, body]) => <article className="op" key={number}><small>{number}</small><h3>{title}</h3><p>{body}</p><i>↗</i></article>)}</div></section>

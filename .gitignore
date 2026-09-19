@@ -13,3 +13,6 @@ out/
 
 # TypeScript incremental compilation cache
 *.tsbuildinfo
+
+# Local preview/release verification receipt
+.news-release/

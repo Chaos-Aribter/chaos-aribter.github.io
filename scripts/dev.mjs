@@ -33,7 +33,7 @@ if (!requestedPort) {
 console.log(`\nStarting the development server at http://localhost:${port}\n`);
 const nextBinary = new URL("../node_modules/next/dist/bin/next", import.meta.url);
 const child = spawn(process.execPath, [nextBinary.pathname, "dev", "--port", String(port)], {
-  env: process.env,
+  env: { ...process.env, NEXT_DIST_DIR: process.env.NEXT_DIST_DIR || `.next-dev-${port}` },
   stdio: "inherit",
 });
 

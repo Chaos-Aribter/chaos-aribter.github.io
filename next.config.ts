@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 
-const nextConfig: NextConfig = {
+const nextConfig = (phase: string): NextConfig => ({
   output: "export",
-  // GitHub project Pages are served below /Chaos-Aribter.githu.io/, while the
-  // custom domain is served from /. Relative assets work in both locations.
-  assetPrefix: process.env.GITHUB_ACTIONS ? "./" : "",
-  distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  // This user Pages repository and cacx.online are both served at the root.
+  // Root-relative assets also work when opening nested news detail URLs.
+  // With static export, a custom distDir changes the export destination.
+  // Only isolate dev caches; production builds must always export to out/.
+  distDir: phase === PHASE_DEVELOPMENT_SERVER ? process.env.NEXT_DIST_DIR ?? ".next" : ".next",
   outputFileTracingRoot: __dirname,
   devIndicators: false,
-};
+});
 
 export default nextConfig;
